@@ -69,52 +69,59 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   </template>
 
-  <script >
+  <script>
 
-    // Extend Polymer.Element with MyMixin
-    class MyCarousel extends MyMixin(Polymer.Element) {
+      // Extend Polymer.Element with MyMixin
+      class MyCarousel extends MyMixin(Polymer.Element) {
 
-      static get is() { return 'my-carousel' }
+          static get is() {
+              return 'my-carousel'
+          }
 
-      connectedCallback() {
-        super.connectedCallback();
+          connectedCallback() {
+              super.connectedCallback();
+          }
+
+          _selectedChanged(selected, oldSelected) {
+              super._selectedChanged(selected, oldSelected);
+
+              this.$.prevBtn.disabled = !selected.previousElementSibling;
+              this.$.nextBtn.disabled = !selected.nextElementSibling;
+
+              this._loadImage(selected);
+              this._loadImage(selected.previousElementSibling);
+              this._loadImage(selected.nextElementSibling);
+          }
+
+          previous() {
+              const elem = this.selected.previousElementSibling;
+              if (elem) {
+                  this.selected = elem;
+              }
+          }
+
+          next() {
+              const elem = this.selected.nextElementSibling;
+              if (elem) {
+                  this.selected = elem;
+              }
+          }
+
+          _loadImage(img) {
+              if (img && !img.src) {
+                  img.src = img.getAttribute('data-src');
+              }
+          }
+
       }
 
-      _selectedChanged(selected, oldSelected) {
-        super._selectedChanged(selected, oldSelected);
+      // Register custom element definition using standard platform API
+      customElements.define(MyCarousel.is, MyCarousel);
 
-        this.$.prevBtn.disabled = !selected.previousElementSibling;
-        this.$.nextBtn.disabled = !selected.nextElementSibling;
+  </script>
 
-        this._loadImage(selected);
-        this._loadImage(selected.previousElementSibling);
-        this._loadImage(selected.nextElementSibling);
-      }
-
-      previous() {
-        const elem = this.selected.previousElementSibling;
-        if (elem) {
-          this.selected = elem;
-        }
-      }
-
-      next() {
-        const elem = this.selected.nextElementSibling;
-        if (elem) {
-          this.selected = elem;
-        }
-      }
-
-      _loadImage(img) {
-        if (img && !img.src) {
-          img.src = img.getAttribute('data-src');
-        }
-      }
-
-    }
-
-    // Register custom element definition using standard platform API
-    customElements.define(MyCarousel.is, MyCarousel);
-
+  <script>
+      const carousel = document.querySelector('my-carousel');
+      setInterval(_ => carousel.next(), 3000);
   </script>
 </dom-module>
