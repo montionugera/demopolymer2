@@ -80,6 +80,66 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
           connectedCallback() {
               super.connectedCallback();
+              requestAnimationFrame(this._installListeners.bind(this))
+              console.log("connectedCallBack");
+          }
+
+          _installListeners() {
+              this.addEventListener('transitionend', this._resetChildrenStyles.bind(this));
+4
+              this.addEventListener('touchstart', this._touchstart.bind(this));
+              this.addEventListener('touchmove', this._touchmove.bind(this));
+              this.addEventListener('touchend', this._touchend.bind(this));
+              console.log("_installListeners transitionend touchstart");
+          }
+
+          _touchstart(event) {
+              // No transition if less than two images
+              if (this.childElementCount < 2) {
+                  console.log("touch start")
+                  // Save start coordinates
+                  if (!this._touchDir) {
+                      this._startX = event.changedTouches[0].clientX;
+                      this._startY = event.changedTouches[0].clientY;
+                  }
+              }
+          }
+
+          _touchmove(event) {
+              // No transition if less than two images
+              if (this.childElementCount < 2) {
+
+
+                  // Is touchmove mostly horizontal or vertical?
+                  if (!this._touchDir) {
+                      const absX = Math.abs(event.changedTouches[0].clientX - this._startX);
+                      const absY = Math.abs(event.changedTouches[0].clientY - this._startY);
+                      this._touchDir = absX > absY ? 'x' : 'y';
+                  }
+
+                  if (this._touchDir === 'x') {
+                      // Prevent vertically scrolling when swiping
+                      event.preventDefault();
+                  }
+
+              }
+          }
+
+          _touchend(event) {
+              // No transition if less than two images
+              if (this.childElementCount < 2) {
+                  this._touchDir = null;
+              }
+          }
+
+          _resetChildrenStyles() {
+              let elem = this.firstElementChild;
+              while (elem) {
+                  elem.style.display = '';
+                  elem.style.transition = '';
+                  elem.style.transform = '';
+                  elem = elem.nextElementSibling;
+              }
           }
 
           _selectedChanged(selected, oldSelected) {
@@ -96,14 +156,30 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
           previous() {
               const elem = this.selected.previousElementSibling;
               if (elem) {
+                  // Setup transition start state
+                  const oldSelected = this.selected;
+                  this._translateX(oldSelected, 0);
+                  this._translateX(elem, -this.offsetWidth);
+
+                  // Start the transition
                   this.selected = elem;
+                  this._translateX(oldSelected, this.offsetWidth, true /* transition */);
+                  this._translateX(elem, 0, true /* transition */);
               }
           }
 
           next() {
               const elem = this.selected.nextElementSibling;
               if (elem) {
+                  // Setup transition start state
+                  const oldSelected = this.selected;
+                  this._translateX(oldSelected, 0);
+                  this._translateX(elem, +this.offsetWidth);
+
+                  // Start the transition
                   this.selected = elem;
+                  this._translateX(oldSelected, -this.offsetWidth, true /* transition */);
+                  this._translateX(elem, 0, true /* transition */);
               }
           }
 
@@ -113,6 +189,12 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
               }
           }
 
+          _translateX(elem, x, transition) {
+              elem.style.display = 'block';
+              elem.style.transition = transition ? 'transform 0.2s' : '';
+              elem.style.transform = 'translate3d(' + x + 'px, 0, 0)';
+          }
+
       }
 
       // Register custom element definition using standard platform API
@@ -120,8 +202,4 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
 
   </script>
 
-  <script>
-      const carousel = document.querySelector('my-carousel');
-      setInterval(_ => carousel.next(), 3000);
-  </script>
 </dom-module>
